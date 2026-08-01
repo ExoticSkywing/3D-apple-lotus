@@ -1,0 +1,121 @@
+import "./lotus-types";
+import "./styles.css";
+
+const app = document.querySelector<HTMLElement>("#app")!;
+
+const initialHTML = app.innerHTML;
+
+const loadScript = (src: string) => new Promise<void>((resolve, reject) => {
+  const script = document.createElement("script");
+  script.src = src;
+  script.onload = () => resolve();
+  script.onerror = () => reject(new Error(`Unable to load ${src}`));
+  document.head.appendChild(script);
+});
+
+const isTouch = matchMedia("(pointer: coarse)").matches;
+const breakpoint = innerWidth <= 734 ? "S" : innerWidth <= 1068 ? "M" : "L";
+const scenePath = `/apple/scenes/iPhone17Pro_US_${breakpoint}_avif.lsd`;
+
+const progress = app.querySelector<HTMLProgressElement>("progress");
+const headline = app.querySelector<HTMLElement>(".loading strong");
+
+async function main() {
+  await loadScript("/apple/libs/lotus.min.js");
+  const Lotus = window.Lotus;
+  if (!Lotus) throw new Error("Lotus runtime did not register");
+
+  await loadScript("/apple/scripts/main.runtime.js");
+  const appleRequire = window.__APPLE_REQUIRE__;
+  if (!appleRequire) throw new Error("Apple module runtime unavailable");
+  const initLockScreenChunk = appleRequire("9ec1093ded8c1b4c7ea2").initLockScreenChunk as (() => unknown) | undefined;
+  const SceneComponent = (appleRequire("8da07f57fe7c7e20cb3e").default as (new (...args: never[]) => unknown) | undefined) ?? Lotus.Lotus.CustomScene;
+  if (!initLockScreenChunk || !SceneComponent) throw new Error("Apple Lotus product viewer modules unavailable");
+  Lotus.Lotus.chunks.entries.set("LockScreenChunk", initLockScreenChunk());
+
+  Lotus.instance().settings.initialize({
+    FeatureDetect: {
+      touchAvailable: () => isTouch,
+      webGLAvailable: () => true,
+      webGL2Available: () => true,
+      safari: false,
+      ios: false,
+      astc: false,
+    },
+    UserAgent: {
+      browser: {
+        safari: false,
+        firefox: false,
+        chrome: true,
+        edge: false,
+        version: { major: 130, minor: 0 },
+      },
+      os: { ios: false, android: false, macos: false, windows: false, linux: true },
+      mobile: isTouch,
+      tablet: false,
+    },
+  });
+  Lotus.instance().settings.gltfTextureTasks = true;
+  Lotus.instance().initialize({ paths: { assets: "/apple/" } });
+
+  const scene = await Lotus.instance().createScene({ component: SceneComponent, element: app.querySelector<HTMLElement>(".product-viewer-canvas")!, url: scenePath });
+
+  const hud = document.createElement("section");
+  hud.className = "hud";
+  hud.innerHTML = `
+    <div class="study-label"><strong>APPLE LOTUS</strong><span>INTERNAL STUDY · ${breakpoint}</span></div>
+    <div class="view-switch" role="group" aria-label="查看角度">
+      <button data-view="front">正面 UI</button><button class="is-active" data-view="backLeft">镜头</button><button data-view="back">背面</button>
+    </div>
+    <div class="color-switch" role="group" aria-label="机身颜色">
+      <button class="swatch orange is-active" data-color="Orange" aria-label="Cosmic Orange"></button>
+      <button class="swatch blue" data-color="Blue" aria-label="Deep Blue"></button>
+      <button class="swatch silver" data-color="Silver" aria-label="Silver"></button>
+    </div>
+  `;
+  app.appendChild(hud);
+
+  if (scene.camera) scene.camera._fovScale = isTouch ? 1.28 : 1.12;
+  const setView = (view: string) => {
+    scene.states.set("mode", "ic");
+    scene.states.set("angles", view);
+    Lotus.instance().tryRequestAnimationFrame();
+    hud.querySelectorAll<HTMLElement>("[data-view]").forEach((el) => el.classList.toggle("is-active", el.dataset.view === view));
+  };
+  const setColor = (color: string) => {
+    scene.states.set("global", color);
+    Lotus.instance().tryRequestAnimationFrame();
+    hud.querySelectorAll<HTMLElement>("[data-color]").forEach((el) => el.classList.toggle("is-active", el.dataset.color === color));
+  };
+  hud.addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button");
+    if (!button) return;
+    if (button.dataset.view) setView(button.dataset.view);
+    if (button.dataset.color) setColor(button.dataset.color);
+  });
+
+  const watch = window.setInterval(() => {
+    const p = scene.loader?.progress ?? 0;
+    if (progress) progress.value = p;
+    if (headline) headline.textContent = p < 100 ? `正在载入官方场景 · ${Math.round(p)}%` : "官方场景准备完成";
+    if (scene.rendered) {
+      clearInterval(watch);
+      app.classList.add("is-ready");
+      if (scene.camera) scene.camera._fovScale = isTouch ? 1.28 : 1.12;
+      setColor("Orange");
+      setView("backLeft");
+    }
+  }, 120);
+
+  window.__LOTUS_STUDY__ = {
+    scene,
+    setView,
+    setColor,
+    diagnostics: () => ({ scenePath, breakpoint, isTouch, rendered: scene.rendered, progress: scene.loader?.progress, canvas: Array.from(app.querySelectorAll("canvas")).map((c) => ({ width: c.width, height: c.height, rect: c.getBoundingClientRect().toJSON() })) }),
+  };
+}
+
+main().catch((error: unknown) => {
+  console.error("[apple-lotus-study]", error);
+  app.innerHTML = `${initialHTML}<div class="error"><strong>官方场景加载失败</strong><span>${String(error)}</span><button type="button">重试</button></div>`;
+});
