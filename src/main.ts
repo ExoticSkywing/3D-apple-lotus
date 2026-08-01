@@ -97,12 +97,20 @@ async function main() {
     if (button.dataset.color) setColor(button.dataset.color);
   });
 
+  const normalizeProgress = (raw: number) => {
+    if (!Number.isFinite(raw) || raw <= 0) return 0;
+    return Math.min(100, Math.max(0, 100 / raw));
+  };
+
   const watch = window.setInterval(() => {
-    const p = scene.loader?.progress ?? 0;
-    if (progress) progress.value = p;
-    if (headline) headline.textContent = p < 100 ? `正在载入官方场景 · ${Math.round(p)}%` : "官方场景准备完成";
+    const rawProgress = scene.loader?.progress ?? 0;
+    const percent = scene.rendered ? 100 : normalizeProgress(rawProgress);
+    if (progress) progress.value = percent;
+    if (headline) headline.textContent = percent < 100 ? `正在载入官方场景 · ${Math.round(percent)}%` : "官方场景准备完成";
     if (scene.rendered) {
       clearInterval(watch);
+      if (progress) progress.value = 100;
+      if (headline) headline.textContent = "官方场景准备完成";
       app.classList.add("is-ready");
       if (scene.camera) scene.camera._fovScale = isTouch ? 1.28 : 1.12;
       setColor("Orange");
