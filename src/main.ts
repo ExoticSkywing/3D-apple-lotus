@@ -42,18 +42,21 @@ async function main() {
       ios: false,
       astc: false,
     },
-    UserAgent: {
-      browser: {
-        safari: false,
-        firefox: false,
-        chrome: true,
-        edge: false,
-        version: { major: 130, minor: 0 },
-      },
-      os: { ios: false, android: false, macos: false, windows: false, linux: true },
-      mobile: isTouch,
-      tablet: false,
-    },
+    UserAgent: (() => {
+      const parsed = (appleRequire("c356674424719f1c4ee0").default ?? appleRequire("c356674424719f1c4ee0")) as { browser?: unknown; os?: unknown; mobile?: boolean; tablet?: boolean };
+      return parsed?.browser ? parsed : {
+        browser: {
+          safari: false,
+          firefox: false,
+          chrome: true,
+          edge: false,
+          version: { major: 130, minor: 0 },
+        },
+        os: { ios: false, android: false, macos: false, windows: false, linux: true },
+        mobile: isTouch,
+        tablet: false,
+      };
+    })(),
   });
   Lotus.instance().settings.gltfTextureTasks = true;
   Lotus.instance().initialize({ paths: { assets: "/apple/" } });
