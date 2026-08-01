@@ -1,4 +1,21 @@
 node_modules/
 dist/
 .playwright-browsers/
+*.tsbuildinfo
+
+# QA captures and transient visual evidence
 evidence/screenshots/*.png
+evidence/qa/
+evidence/references/
+evidence/mobile-first.png
+evidence/probe2.png
+
+# Apple first-party runtime assets are re-fetched by scripts/mirror_apple_lotus.py.
+# Keep source page/runtime evidence tracked, but do not put the 100+ MB mirror in Git.
+public/apple/libs/
+public/apple/page.html
+public/apple/scenes/
+public/apple/scripts/main.built.js
+public/apple/uploads/
+source-mirror/apple/scenes/
+source-mirror/apple/uploads/
