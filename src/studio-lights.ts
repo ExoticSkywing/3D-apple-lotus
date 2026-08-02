@@ -18,7 +18,7 @@ export function createStudioLights(scene: Scene, Three: Record<string, new (...a
 
   const key = new T.DirectionalLight(0xfff3e5, 1.1) as import("three").DirectionalLight & { lightLayer: number };
   key.name = "StudioBodyKey";
-  key.position.set(-9, 1, 8);
+  key.position.set(-4, 1, 8);
   key.lightLayer = 1;
   group.add(key);
   scene.add(group);
