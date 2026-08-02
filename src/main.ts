@@ -1,4 +1,5 @@
 import "./lotus-types";
+import { createStudioLights } from "./studio-lights";
 import "./styles.css";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -62,11 +63,12 @@ async function main() {
   Lotus.instance().initialize({ paths: { assets: "/apple/" } });
 
   const scene = await Lotus.instance().createScene({ component: SceneComponent, element: app.querySelector<HTMLElement>(".product-viewer-canvas")!, url: scenePath });
+  const studioLights = createStudioLights(scene as never, (window.Lotus as unknown as { THREE: Record<string, new (...args: never[]) => unknown> }).THREE);
 
   const hud = document.createElement("section");
   hud.className = "hud";
   hud.innerHTML = `
-    <div class="study-label"><strong>APPLE LOTUS</strong><span>INTERNAL STUDY · ${breakpoint}</span></div>
+    <div class="study-label"><strong>APPLE LOTUS</strong><span>STUDIO LIFT · ${breakpoint}</span></div>
     <div class="view-switch" role="group" aria-label="查看角度">
       <button data-view="front">正面 UI</button><button class="is-active" data-view="backLeft">镜头</button><button data-view="back">背面</button>
     </div>
@@ -82,11 +84,13 @@ async function main() {
   const setView = (view: string) => {
     scene.states.set("mode", "ic");
     scene.states.set("angles", view);
+    studioLights.setView(view);
     Lotus.instance().tryRequestAnimationFrame();
     hud.querySelectorAll<HTMLElement>("[data-view]").forEach((el) => el.classList.toggle("is-active", el.dataset.view === view));
   };
   const setColor = (color: string) => {
     scene.states.set("global", color);
+    studioLights.setColor(color);
     Lotus.instance().tryRequestAnimationFrame();
     hud.querySelectorAll<HTMLElement>("[data-color]").forEach((el) => el.classList.toggle("is-active", el.dataset.color === color));
   };
