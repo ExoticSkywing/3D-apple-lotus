@@ -39,6 +39,7 @@ declare global {
       scene: LotusScene | null;
       setView: (value: string) => void;
       setColor: (value: string) => void;
+      setWallpaper: (value: string) => Promise<void>;
       diagnostics: () => Record<string, unknown>;
     };
   }

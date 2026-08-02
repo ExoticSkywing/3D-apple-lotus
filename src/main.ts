@@ -2,6 +2,7 @@ import "./lotus-types";
 import { revealOfficialBackPanel } from "./back-panel";
 import { createPinchZoom } from "./pinch-zoom";
 import { createStudioLights } from "./studio-lights";
+import { createWallpaperController, WALLPAPERS } from "./wallpapers";
 import "./styles.css";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -67,6 +68,7 @@ async function main() {
 
   const scene = await Lotus.instance().createScene({ component: SceneComponent, element: app.querySelector<HTMLElement>(".product-viewer-canvas")!, url: scenePath });
   const studioLights = createStudioLights(scene as never, (window.Lotus as unknown as { THREE: Record<string, new (...args: never[]) => unknown> }).THREE);
+  const wallpaperController = await createWallpaperController(scene as never, Lotus.instance(), (window.Lotus as unknown as { THREE: Parameters<typeof createWallpaperController>[2] }).THREE);
   revealOfficialBackPanel(scene as never);
 
   const hud = document.createElement("section");
@@ -80,6 +82,11 @@ async function main() {
       <button class="swatch orange is-active" data-color="Orange" aria-label="Cosmic Orange"></button>
       <button class="swatch blue" data-color="Blue" aria-label="Deep Blue"></button>
       <button class="swatch silver" data-color="Silver" aria-label="Silver"></button>
+    </div>
+    <button class="wallpaper-trigger" type="button" aria-label="选择屏幕画面" aria-expanded="false"><span>SCREEN</span><i></i></button>
+    <div class="wallpaper-panel" role="group" aria-label="屏幕画面预设">
+      <span class="wallpaper-caption">SCREEN SCENE</span>
+      <div class="wallpaper-options">${WALLPAPERS.map((preset, index) => `<button type="button" class="wallpaper-option${index === 0 ? " is-active" : ""}" data-wallpaper="${preset.id}" aria-label="${preset.label}"><img src="${preset.preview}" alt="" /><span>${preset.label}</span></button>`).join("")}</div>
     </div>
   `;
   app.appendChild(hud);
@@ -101,11 +108,22 @@ async function main() {
     Lotus.instance().tryRequestAnimationFrame();
     hud.querySelectorAll<HTMLElement>("[data-color]").forEach((el) => el.classList.toggle("is-active", el.dataset.color === color));
   };
+  const setWallpaper = async (id: string) => {
+    await wallpaperController.select(id);
+    hud.querySelectorAll<HTMLElement>("[data-wallpaper]").forEach((el) => el.classList.toggle("is-active", el.dataset.wallpaper === id));
+    hud.classList.remove("wallpaper-open");
+    hud.querySelector<HTMLElement>(".wallpaper-trigger")?.setAttribute("aria-expanded", "false");
+  };
   hud.addEventListener("click", (event) => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button");
     if (!button) return;
     if (button.dataset.view) setView(button.dataset.view);
     if (button.dataset.color) setColor(button.dataset.color);
+    if (button.dataset.wallpaper) void setWallpaper(button.dataset.wallpaper);
+    if (button.classList.contains("wallpaper-trigger")) {
+      const open = hud.classList.toggle("wallpaper-open");
+      button.setAttribute("aria-expanded", String(open));
+    }
   });
 
   const normalizeProgress = (raw: number) => {
@@ -136,7 +154,8 @@ async function main() {
     scene,
     setView,
     setColor,
-    diagnostics: () => ({ scenePath, breakpoint, isTouch, rendered: scene.rendered, progress: scene.loader?.progress, canvas: Array.from(app.querySelectorAll("canvas")).map((c) => ({ width: c.width, height: c.height, rect: c.getBoundingClientRect().toJSON() })) }),
+    setWallpaper,
+    diagnostics: () => ({ scenePath, breakpoint, isTouch, wallpaper: wallpaperController.getCurrent(), rendered: scene.rendered, progress: scene.loader?.progress, canvas: Array.from(app.querySelectorAll("canvas")).map((c) => ({ width: c.width, height: c.height, rect: c.getBoundingClientRect().toJSON() })) }),
   };
 }
 
