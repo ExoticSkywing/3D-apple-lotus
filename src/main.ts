@@ -21,6 +21,7 @@ const scenePath = `/apple/scenes/iPhone17Pro_US_${breakpoint}_avif.lsd`;
 
 const progress = app.querySelector<HTMLProgressElement>("progress");
 const headline = app.querySelector<HTMLElement>(".loading strong");
+const percentLabel = app.querySelector<HTMLElement>(".boot-percent");
 
 async function main() {
   await loadScript("/apple/libs/lotus.min.js");
@@ -114,10 +115,12 @@ async function main() {
     const rawProgress = scene.loader?.progress ?? 0;
     const percent = scene.rendered ? 100 : normalizeProgress(rawProgress);
     if (progress) progress.value = percent;
-    if (headline) headline.textContent = percent < 100 ? `正在载入官方场景 · ${Math.round(percent)}%` : "官方场景准备完成";
+    if (percentLabel) percentLabel.textContent = `${Math.round(percent)}%`;
+    if (headline) headline.textContent = percent < 100 ? "正在载入官方场景" : "官方场景准备完成";
     if (scene.rendered) {
       clearInterval(watch);
       if (progress) progress.value = 100;
+      if (percentLabel) percentLabel.textContent = "100%";
       if (headline) headline.textContent = "官方场景准备完成";
       app.classList.add("is-ready");
       if (scene.camera) scene.camera._fovScale = isTouch ? 1.28 : 1.12;
