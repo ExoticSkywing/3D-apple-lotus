@@ -18,7 +18,7 @@ export function createStudioLights(scene: Scene, Three: Record<string, new (...a
 
   const key = new T.DirectionalLight(0xfff3e5, 1.1) as import("three").DirectionalLight & { lightLayer: number };
   key.name = "StudioBodyKey";
-  key.position.set(-6, 7, 9);
+  key.position.set(-9, 1, 8);
   key.lightLayer = 1;
   group.add(key);
   scene.add(group);
@@ -28,7 +28,7 @@ export function createStudioLights(scene: Scene, Three: Record<string, new (...a
   const apply = () => {
     const screenFacing = currentView.startsWith("front");
     const productFacing = currentView === "back" || currentView === "backLeft" || currentView === "backRight";
-    const colorBoost = currentColor === "Blue" ? 1.82 : currentColor === "Silver" ? 1.55 : 1;
+    const colorBoost = currentColor === "Blue" ? 2.28 : currentColor === "Silver" ? 1.55 : 1;
     ambient.intensity = screenFacing ? 0.22 : (productFacing ? 2.05 : 1.25) * colorBoost;
     key.intensity = screenFacing ? 0.34 : (productFacing ? 2.35 : 1.55) * colorBoost;
   };
