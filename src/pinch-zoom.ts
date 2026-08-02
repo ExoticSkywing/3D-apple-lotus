@@ -1,4 +1,4 @@
-type Camera = { zoom?: number; updateProjectionMatrix?: () => void };
+type Camera = { _fovScale?: number; zoom?: number; updateProjectionMatrix?: () => void };
 type Scene = { camera?: Camera };
 type Lotus = { tryRequestAnimationFrame: () => void };
 
@@ -6,7 +6,6 @@ type PinchController = { getScale: () => number; apply: () => void; dispose: () 
 
 export function createPinchZoom(target: HTMLElement, scene: Scene, lotus: Lotus, initialScale: number): PinchController {
   let scale = initialScale;
-  let zoom = 1;
   let startDistance = 0;
   let startScale = initialScale;
   const distance = (touches: TouchList) => {
@@ -15,9 +14,9 @@ export function createPinchZoom(target: HTMLElement, scene: Scene, lotus: Lotus,
   };
   const apply = (next: number) => {
     scale = Math.min(1.75, Math.max(0.72, next));
-    zoom = initialScale / scale;
     if (scene.camera) {
-      scene.camera.zoom = zoom;
+      scene.camera._fovScale = scale;
+      scene.camera.zoom = 1;
       scene.camera.updateProjectionMatrix?.();
     }
     lotus.tryRequestAnimationFrame();
@@ -35,15 +34,19 @@ export function createPinchZoom(target: HTMLElement, scene: Scene, lotus: Lotus,
   };
   const onEnd = (event: TouchEvent) => { if (event.touches.length < 2) startDistance = 0; };
   const maintain = window.setInterval(() => {
-    if (startDistance === 0 && scene.camera && Math.abs((scene.camera.zoom ?? 1) - zoom) > 0.001) {
-      scene.camera.zoom = zoom;
+    if (startDistance === 0 && scene.camera && Math.abs((scene.camera._fovScale ?? initialScale) - scale) > 0.001) {
+      scene.camera._fovScale = scale;
+      scene.camera.zoom = 1;
       scene.camera.updateProjectionMatrix?.();
       lotus.tryRequestAnimationFrame();
     }
   }, 80);
   target.addEventListener("touchstart", onStart, { passive: false });
+  window.addEventListener("touchstart", onStart, { passive: false, capture: true });
   target.addEventListener("touchmove", onMove, { passive: false });
+  window.addEventListener("touchmove", onMove, { passive: false, capture: true });
   target.addEventListener("touchend", onEnd, { passive: true });
+  window.addEventListener("touchend", onEnd, { passive: true, capture: true });
   target.addEventListener("touchcancel", onEnd, { passive: true });
   apply(initialScale);
   return {
@@ -52,8 +55,11 @@ export function createPinchZoom(target: HTMLElement, scene: Scene, lotus: Lotus,
     dispose: () => {
       clearInterval(maintain);
       target.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchstart", onStart, true);
       target.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchmove", onMove, true);
       target.removeEventListener("touchend", onEnd);
+      window.removeEventListener("touchend", onEnd, true);
       target.removeEventListener("touchcancel", onEnd);
     },
   };
