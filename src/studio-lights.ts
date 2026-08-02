@@ -27,9 +27,10 @@ export function createStudioLights(scene: Scene, Three: Record<string, new (...a
   let currentColor = "Orange";
   const apply = () => {
     const screenFacing = currentView.startsWith("front");
+    const productFacing = currentView === "back" || currentView === "backLeft" || currentView === "backRight";
     const colorBoost = currentColor === "Blue" ? 1.82 : currentColor === "Silver" ? 1.55 : 1;
-    ambient.intensity = screenFacing ? 0.22 : 0.8 * colorBoost;
-    key.intensity = screenFacing ? 0.34 : 1.1 * colorBoost;
+    ambient.intensity = screenFacing ? 0.22 : (productFacing ? 2.05 : 1.25) * colorBoost;
+    key.intensity = screenFacing ? 0.34 : (productFacing ? 2.35 : 1.55) * colorBoost;
   };
   const setView = (view: string) => { currentView = view; apply(); };
   const setColor = (color: string) => { currentColor = color; apply(); };
