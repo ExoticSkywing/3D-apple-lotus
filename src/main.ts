@@ -1,4 +1,5 @@
 import "./lotus-types";
+import { revealOfficialBackPanel } from "./back-panel";
 import { createStudioLights } from "./studio-lights";
 import "./styles.css";
 
@@ -64,6 +65,7 @@ async function main() {
 
   const scene = await Lotus.instance().createScene({ component: SceneComponent, element: app.querySelector<HTMLElement>(".product-viewer-canvas")!, url: scenePath });
   const studioLights = createStudioLights(scene as never, (window.Lotus as unknown as { THREE: Record<string, new (...args: never[]) => unknown> }).THREE);
+  revealOfficialBackPanel(scene as never);
 
   const hud = document.createElement("section");
   hud.className = "hud";
@@ -85,12 +87,14 @@ async function main() {
     scene.states.set("mode", "ic");
     scene.states.set("angles", view);
     studioLights.setView(view);
+    revealOfficialBackPanel(scene as never);
     Lotus.instance().tryRequestAnimationFrame();
     hud.querySelectorAll<HTMLElement>("[data-view]").forEach((el) => el.classList.toggle("is-active", el.dataset.view === view));
   };
   const setColor = (color: string) => {
     scene.states.set("global", color);
     studioLights.setColor(color);
+    revealOfficialBackPanel(scene as never);
     Lotus.instance().tryRequestAnimationFrame();
     hud.querySelectorAll<HTMLElement>("[data-color]").forEach((el) => el.classList.toggle("is-active", el.dataset.color === color));
   };
