@@ -4,9 +4,10 @@ type LotusSceneState = {
 };
 
 type LotusScene = {
+  interactiveCameraScript?: { theta?: number; phi?: number };
   loader?: { progress: number };
   rendered?: boolean;
-  camera?: { _fovScale?: number };
+  camera?: { _fovScale?: number; zoom?: number; updateProjectionMatrix?: () => void };
   states: LotusSceneState;
   renderer?: { domElement?: HTMLCanvasElement };
   render?: () => void;

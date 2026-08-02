@@ -1,5 +1,6 @@
 import "./lotus-types";
 import { revealOfficialBackPanel } from "./back-panel";
+import { createPinchZoom } from "./pinch-zoom";
 import { createStudioLights } from "./studio-lights";
 import "./styles.css";
 
@@ -84,6 +85,7 @@ async function main() {
   app.appendChild(hud);
 
   if (scene.camera) scene.camera._fovScale = isTouch ? 1.28 : 1.12;
+  const pinchZoom = createPinchZoom(app.querySelector<HTMLElement>(".viewer-hit-area")!, scene, Lotus.instance(), isTouch ? 1.28 : 1.12);
   const setView = (view: string) => {
     scene.states.set("mode", "ic");
     scene.states.set("angles", view);
@@ -123,7 +125,8 @@ async function main() {
       if (percentLabel) percentLabel.textContent = "100%";
       if (headline) headline.textContent = "官方场景准备完成";
       app.classList.add("is-ready");
-      if (scene.camera) scene.camera._fovScale = isTouch ? 1.28 : 1.12;
+      if (scene.camera) scene.camera._fovScale = pinchZoom.getScale();
+      pinchZoom.apply();
       setColor("Orange");
       setView("backLeft");
     }
