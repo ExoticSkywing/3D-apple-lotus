@@ -81,6 +81,7 @@ def main() -> None:
     seeds = [(f"scenes/{name}", BASE + f"scenes/{name}") for name in SCENES]
     seeds += [
         ("libs/lotus.min.js", BASE + "libs/lotus.min.js"),
+        ("shared/environment.hdr", BASE + "shared/environment.hdr"),
         ("page.html", "https://www.apple.com/iphone-17-pro/"),
         ("scripts/main.built.js", "https://www.apple.com/v/iphone-17-pro/h/built/scripts/overview/main.built.js"),
     ]

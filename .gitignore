@@ -13,6 +13,7 @@ evidence/probe2.png
 # Apple first-party runtime assets are re-fetched by scripts/mirror_apple_lotus.py.
 # Keep source page/runtime evidence tracked, but do not put the 100+ MB mirror in Git.
 public/apple/libs/
+public/apple/shared/
 public/apple/page.html
 public/apple/scenes/
 public/apple/scripts/main.built.js

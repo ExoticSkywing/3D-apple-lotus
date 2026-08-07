@@ -5,13 +5,20 @@ type Scene = { eventPool?: { instances?: Array<{ source?: unknown }> }; traverse
 type Lotus = { tryRequestAnimationFrame: () => void };
 
 export type WallpaperPreset = { id: string; label: string; src: string; preview: string };
+export type WallpaperController = {
+  available: boolean;
+  presets: WallpaperPreset[];
+  select: (id: string) => Promise<string>;
+  getCurrent: () => string;
+  dispose: () => void;
+};
 export const WALLPAPERS: WallpaperPreset[] = [
   { id: "editorial", label: "Editorial", src: "original", preview: "/wallpapers/editorial.webp" },
   { id: "silk", label: "Silk", src: "/wallpapers/silk.webp", preview: "/wallpapers/silk.webp" },
   { id: "arctic", label: "Arctic", src: "/wallpapers/arctic.webp", preview: "/wallpapers/arctic.webp" },
 ];
 
-export async function createWallpaperController(scene: Scene, lotus: Lotus, Three: { TextureLoader: new () => TextureLoader; SRGBColorSpace?: unknown }) {
+export async function createWallpaperController(scene: Scene, lotus: Lotus, Three: { TextureLoader: new () => TextureLoader; SRGBColorSpace?: unknown }): Promise<WallpaperController> {
   const chunks = (scene.eventPool?.instances ?? []).map((instance) => (instance as { source?: unknown }).source ?? instance).filter((source): source is LockChunk => !!source && typeof source === "object" && "photoMap" in source && "meshMaterial" in source);
   const screenMaterials: Array<{ uniforms?: Record<string, { value?: unknown }> }> = [];
   scene.traverse?.((object) => { if (object.material?.isLockScreenChunk) screenMaterials.push(object.material); });
@@ -21,7 +28,15 @@ export async function createWallpaperController(scene: Scene, lotus: Lotus, Thre
     scene.traverse?.((object) => { if (object.material?.isLockScreenChunk && !screenMaterials.includes(object.material)) screenMaterials.push(object.material); });
   }
   const originalBackgrounds = screenMaterials.map((material) => material.uniforms?.backgroundMap?.value as Texture | undefined);
-  if (!chunks.length && !screenMaterials.length) throw new Error("LockScreenChunk wallpaper input unavailable");
+  if (!chunks.length && !screenMaterials.length) {
+    return {
+      available: false,
+      presets: WALLPAPERS,
+      select: async () => WALLPAPERS[0].id,
+      getCurrent: () => WALLPAPERS[0].id,
+      dispose: () => undefined,
+    };
+  }
   const original = chunks.map((chunk) => chunk.meshMaterial?.uniforms?.map?.value);
   const loader = new Three.TextureLoader();
   const loaded = new Map<string, Texture>();
@@ -49,6 +64,7 @@ export async function createWallpaperController(scene: Scene, lotus: Lotus, Thre
     return current;
   };
   return {
+    available: true,
     presets: WALLPAPERS,
     select,
     getCurrent: () => current,
