@@ -34,6 +34,4 @@ npx tsx scripts/verify-progress.ts
 ## Branch policy
 
 - `main`: verified foundation/baseline.
-- `feat/*`: visual and interaction experiments.
-
-Current visual experiment: `feat/arctic-halo-lighting`.
+- `feat/*`: isolated visual and interaction experiments; rejected experiments are removed rather than retained in the main worktree.
